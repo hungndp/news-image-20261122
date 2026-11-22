@@ -1,4 +1,6 @@
-// gfx.ts — own tiny graphics kit for the 22 Nov 2026 front page (v2).
+// gfx.ts — own tiny graphics kit for the 22 Nov 2026 front page (v3,
+// the full-wire edition: v2's drawn front page fused with a dense
+// 175-brief index, 187 stories in all).
 // Canvas over a raw RGB buffer, a hand-built 5x7 bitmap font
 // (uppercase + digits + punctuation), deterministic seeded grain /
 // halftone / newsprint texture, and a minimal PNG encoder (zlib

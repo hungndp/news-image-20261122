@@ -1,7 +1,9 @@
-// art.ts — drawn artwork for the 22 Nov 2026 front page (v2): three
+// art.ts — drawn artwork for the 22 Nov 2026 front page (v3): three
 // big lead illustrations, small motif icons for the feature cards,
 // and a stylised equirectangular world map with numbered pins.
-// Everything is vector code over the gfx Canvas; no assets.
+// Everything is vector code over the gfx Canvas; no assets. The art
+// is carried at full v2 quality — the v3 index grows in the text
+// bands only, never by thinning a single drawing.
 import { Canvas, rng, type RGB } from "./gfx.ts";
 
 export const PAL = {

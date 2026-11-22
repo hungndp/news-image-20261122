@@ -1,11 +1,13 @@
-// main.ts — "The Sunday Globe": Sunday 22 November 2026.
-// A curated front page, not an index: 36 stories, every one
-// reported on Sunday 22 Nov 2026, grouped into 7 regions.
-// 12 drawn cards (3 illustrated leads + 9 feature cards), a world
-// map with all 12 pinned, a date-check box, a diary of the day in
-// UTC, and 24 one-line briefs. Drawn programmatically (own bitmap
-// font, own PNG encoder, no assets). Deterministic: two runs write
-// byte-identical PNG files.
+// main.ts — "The Sunday Globe, full-wire edition": Sunday
+// 22 November 2026, BOTH axes at once. The drawn front page of v2
+// at full quality — 3 illustrated leads, 9 icon feature cards, a
+// world map with all 12 drawn stories pinned, a date-check box —
+// fused with the dense wire index of v1: 175 one-line briefs in 5
+// columns under the map, 187 stories in all across 7 regions.
+// Nothing was traded: the artwork keeps its full size and detail,
+// and the index grows only in the text bands. Drawn
+// programmatically (own bitmap font, own PNG encoder, no assets).
+// Deterministic: two runs write byte-identical PNG files.
 import { readFileSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,7 +26,7 @@ type Data = {
   features: Feature[];
   briefs: Brief[];
   datecheck: string[];
-  diary: { h: number; t: string }[];
+  timeline: { h: number; t: string }[];
 };
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -59,6 +61,13 @@ function sectionTitle(cv: Canvas, x: number, y: number, s: string, c: RGB): void
   drawText(cv, x + 8, y, s, 1, c);
 }
 
+function truncWords(s: string, max: number): string {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > 8 ? cut.slice(0, sp) : cut) + ".";
+}
+
 // ---- masthead -------------------------------------------------------
 function masthead(cv: Canvas): void {
   cv.rect(0, 0, W, 64, PAL.navy);
@@ -68,7 +77,7 @@ function masthead(cv: Canvas): void {
   const ed = "GLOBAL WIRE EDITION - NO. 22";
   drawText(cv, W - M - textWidth(ed, 1), 6, ed, 1, PAL.paperDim);
   drawText(cv, M, 18, "SUNDAY 22 NOVEMBER 2026", 4, PAL.paper);
-  drawText(cv, 700, 20, "36 STORIES", 2, PAL.goldSoft);
+  drawText(cv, 700, 20, `${storyCount()} STORIES`, 2, PAL.goldSoft);
   drawText(cv, 700, 40, "7 REGIONS - 40+ WIRES", 1, PAL.paperDim);
   drawText(cv, 884, 40, "ONE DAY OF NEWS", 1, PAL.paperDim);
 }
@@ -104,11 +113,11 @@ function regionChips(cv: Canvas, y: number): void {
     drawText(cv, x + 8, y + 5, label, 1, PAL.paper);
     x += w + 6;
   }
-  const note = "COUNTS FROM THE FULL 36-STORY SET";
+  const note = `COUNTS FROM THE FULL ${storyCount()}-STORY SET`;
   drawText(cv, W - M - textWidth(note, 1), y + 5, note, 1, PAL.grey);
 }
 
-// ---- lead cards -----------------------------------------------------
+// ---- lead cards (art at full v2 size: 84px panels, icons 40px) -----
 function bigLead(cv: Canvas, x: number, y: number, w: number, h: number, lead: Lead, n: number): void {
   cv.rect(x, y, w, h, PAL.white);
   cv.frame(x, y, w, h, PAL.ink, 1);
@@ -153,7 +162,7 @@ function compactLead(cv: Canvas, x: number, y: number, w: number, h: number, lea
   cv.grain(x + 1, y + 1, w - 2, h - 2, 9000 + n * 197, [120, 105, 70], [255, 255, 250]);
   cv.rect(x, y, w, 3, PAL.teal);
   const icon = ICONS[lead.art];
-  if (icon) icon(cv, x + 5, y + 16);
+  if (icon) icon(cv, x + 5, y + 13);
   drawText(cv, x + 50, y + 7, lead.geo, 1, PAL.red);
   const cols = Math.floor((w - 58) / 12);
   let ty = y + 18;
@@ -166,19 +175,12 @@ function compactLead(cv: Canvas, x: number, y: number, w: number, h: number, lea
 }
 
 // ---- map strip, date check, pinned stories --------------------------
-function truncWords(s: string, max: number): string {
-  if (s.length <= max) return s;
-  const cut = s.slice(0, max);
-  const sp = cut.lastIndexOf(" ");
-  return (sp > 8 ? cut.slice(0, sp) : cut) + ".";
-}
-
 function mapStrip(cv: Canvas, y: number): void {
   sectionTitle(cv, M, y, "WHERE IT HAPPENED - THE DAY ON THE MAP", PAL.ink);
   const dcTitle = "DATE CHECK - TEMPTING, BUT NOT 22 NOV NEWS";
   drawText(cv, 608, y, dcTitle, 1, PAL.red);
   const mapY = y + 14;
-  const mapH = 140;
+  const mapH = 128;
   const proj = drawMap(cv, M, mapY, 586, mapH);
   cv.frame(M, mapY, 586, mapH, PAL.ink, 1);
   const pinned: { geo: string; head: string; lon: number; lat: number }[] = [
@@ -188,6 +190,8 @@ function mapStrip(cv: Canvas, y: number): void {
   pinned.forEach((f, i) => {
     const [px, py] = proj(f.lon, f.lat);
     drawPin(cv, px, py, i + 1, PAL.red, PAL.white);
+    const num = String(i + 1);
+    drawText(cv, px - (num.length === 1 ? 2 : 5), py - 3, num, 1, PAL.white);
   });
   // date-check box (right of the map)
   cv.rect(608, mapY, W - M - 608, mapH, [255, 252, 240]);
@@ -199,7 +203,7 @@ function mapStrip(cv: Canvas, y: number): void {
     dy += 12;
   }
   drawText(cv, 616, dy + 4, "EACH WAS CHECKED AGAINST THE WIRES BEFORE", 1, PAL.grey);
-  drawText(cv, 616, dy + 14, "IT WAS LEFT OUT OF THE 36.", 1, PAL.grey);
+  drawText(cv, 616, dy + 14, `IT WAS LEFT OUT OF THE ${storyCount()}.`, 1, PAL.grey);
   // pinned stories legend, full width under the map
   let ly = mapY + mapH + 8;
   pinned.forEach((f, i) => {
@@ -211,53 +215,53 @@ function mapStrip(cv: Canvas, y: number): void {
   });
 }
 
-// ---- the 24 briefs -----------------------------------------------------
-function briefsGrid(cv: Canvas, y: number): void {
-  sectionTitle(cv, M, y - 14, "THE REST OF THE DAY - 24 MORE STORIES, ONE LINE EACH", PAL.ink);
+// ---- the wire index: 175 briefs, 5 columns, one line each -----------
+// The coverage axis. Type stays at the full 5x7 face on an 8px pitch
+// (the density v1 proved legible); briefs were edited to fit their
+// column, and a truncWords guard keeps any long line inside it.
+function indexGrid(cv: Canvas, y: number): void {
+  sectionTitle(cv, M, y - 14, `THE WIRE INDEX - ${data.briefs.length} MORE STORIES, ONE LINE EACH`, PAL.ink);
   const note = "EVERY ITEM REPORTED ON SUN 22 NOV 2026";
   drawText(cv, W - M - textWidth(note, 1), y - 14, note, 1, PAL.grey);
-  const rows = 12;
-  const colW = 493;
+  const cols = 5;
+  const colW = 192;
+  const rows = Math.ceil(data.briefs.length / cols);
   for (let i = 0; i < data.briefs.length; i++) {
     const col = Math.floor(i / rows);
     const row = i % rows;
-    const x = M + col * (colW + 10);
-    const yy = y + row * 15;
-    if (row % 2 === 0) cv.blendRect(x - 2, yy - 1, colW + 4, 14, [226, 214, 178], 0.55);
+    const x = M + col * (colW + 9);
+    const yy = y + row * 8;
+    if (row % 2 === 0) cv.blendRect(x - 2, yy - 1, colW + 4, 8, [226, 214, 178], 0.55);
     const b = data.briefs[i];
-    drawText(cv, x, yy + 3, `${b.t} (${b.s})`, 1, PAL.ink);
+    drawText(cv, x, yy, truncWords(`${b.t} (${b.s})`, 32), 1, PAL.ink);
   }
-  const x = M + (colW + 10) - 6;
-  cv.rect(x, y - 2, 1, rows * 15, PAL.paperDim);
+  for (let c = 1; c < cols; c++) {
+    const x = M + c * (colW + 9) - 5;
+    cv.rect(x, y - 2, 1, rows * 8, PAL.paperDim);
+  }
 }
 
-// ---- diary of the day in UTC -------------------------------------------
-function diary(cv: Canvas, y: number): void {
+// ---- diary of the day: the UTC timeline ------------------------------
+function timeline(cv: Canvas, y: number): void {
   sectionTitle(cv, M, y, "DIARY OF THE DAY - SUNDAY IN UTC", PAL.ink);
-  const axisY = y + 26;
+  const axisY = y + 20;
   cv.line(M, axisY, W - M, axisY, PAL.ink, 1);
-  for (let h = 0; h <= 24; h += 6) {
+  for (let h = 0; h <= 24; h += 2) {
     const x = M + (h / 24) * (W - 2 * M);
     cv.line(x, axisY - 2, x, axisY + 2, PAL.ink, 1);
-    const label = String(h).padStart(2, "0");
-    drawText(cv, x - 6, axisY + 6, label, 1, PAL.grey);
   }
-  const utc = "24 UTC";
-  drawText(cv, W - M - textWidth(utc, 1), axisY + 6, utc, 1, PAL.grey);
-  data.diary.forEach((ev) => {
+  for (let h = 0; h <= 24; h += 6) {
+    const x = M + (h / 24) * (W - 2 * M);
+    cv.line(x, axisY - 4, x, axisY + 4, PAL.ink, 1);
+  }
+  const slotW = (W - 2 * M) / data.timeline.length;
+  data.timeline.forEach((ev, i) => {
     const mx = M + (ev.h / 24) * (W - 2 * M);
     cv.circle(mx, axisY, 3, PAL.red, true);
-  });
-  // diary lines, 2 columns x 3 rows
-  const colW = 493;
-  data.diary.forEach((ev, i) => {
-    const col = Math.floor(i / 3);
-    const row = i % 3;
-    const x = M + col * (colW + 10);
-    const yy = y + 46 + row * 16;
-    const hh = String(ev.h).padStart(2, "0");
-    drawText(cv, x, yy, `${hh} UTC`, 1, PAL.red);
-    drawText(cv, x + 42, yy, ev.t, 1, PAL.ink);
+    const cx = M + slotW * (i + 0.5);
+    const ly = i % 2 === 0 ? axisY + 8 : axisY + 20;
+    cv.line(mx, axisY + 2, cx, ly, PAL.grey, 1);
+    centerText(cv, cx, ly, ev.t, 1, PAL.ink);
   });
 }
 
@@ -279,16 +283,16 @@ function main(): void {
   statStrip(cv, 66);
   regionChips(cv, 98);
   const bigW = 326;
-  for (let i = 0; i < 3; i++) bigLead(cv, M + i * (bigW + 9), 120, bigW, 180, data.leads[i], i + 1);
+  for (let i = 0; i < 3; i++) bigLead(cv, M + i * (bigW + 9), 120, bigW, 176, data.leads[i], i + 1);
   const compW = 194;
   for (let i = 0; i < 5; i++)
-    compactLead(cv, M + i * (compW + 6), 306, compW, 76, data.features[i], 4 + i);
+    compactLead(cv, M + i * (compW + 6), 302, compW, 70, data.features[i], 4 + i);
   const wideW = 242;
   for (let i = 0; i < 4; i++)
-    compactLead(cv, M + i * (wideW + 6), 388, wideW, 76, data.features[5 + i], 9 + i);
-  mapStrip(cv, 470);
-  briefsGrid(cv, 690);
-  diary(cv, 880);
+    compactLead(cv, M + i * (wideW + 6), 378, wideW, 70, data.features[5 + i], 9 + i);
+  mapStrip(cv, 450);
+  indexGrid(cv, 653);
+  timeline(cv, 944);
   footer(cv);
   cv.texture(20261122, 3, 0.35); // newsprint fibre, last pass (light, keeps bytes down)
 
