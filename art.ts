@@ -1,5 +1,5 @@
-// art.ts — drawn artwork for the 22 Nov 2026 poster: three big
-// lead illustrations, small motif icons for the compact leads,
+// art.ts — drawn artwork for the 22 Nov 2026 front page (v2): three
+// big lead illustrations, small motif icons for the feature cards,
 // and a stylised equirectangular world map with numbered pins.
 // Everything is vector code over the gfx Canvas; no assets.
 import { Canvas, rng, type RGB } from "./gfx.ts";
@@ -84,12 +84,15 @@ export function artGulf(cv: Canvas, x: number, y: number, w: number, h: number):
   }
 }
 
-// ---- big lead art 2: climate deadlock — thermometer + split sun -------
+// ---- big lead art 2: climate deadlock — split sun, thermometer, clock --
+// The summit is on its SECOND day of overtime on Sunday: the clock
+// reads past midnight, the thermometer keeps rising, the two arrows
+// still pull apart.
 export function artClimate(cv: Canvas, x: number, y: number, w: number, h: number): void {
   // pale sky
   cv.rect(x, y, w, h, [232, 226, 200]);
   // split sun: half bright, half grey
-  const cx = x + Math.floor(w * 0.22);
+  const cx = x + Math.floor(w * 0.20);
   const cy = y + Math.floor(h * 0.42);
   cv.circle(cx, cy, 22, [232, 170, 60], true);
   cv.rect(cx, cy - 22, 22, 44, [150, 146, 134]);
@@ -103,7 +106,7 @@ export function artClimate(cv: Canvas, x: number, y: number, w: number, h: numbe
     cv.line(gx, y + h - 18, gx + (r() < 0.5 ? -6 : 6), y + h - 4, [120, 100, 70], 1);
   }
   // big thermometer
-  const tx = x + Math.floor(w * 0.62);
+  const tx = x + Math.floor(w * 0.60);
   const ty = y + 6;
   const th = h - 22;
   cv.rect(tx, ty, 14, th - 12, [255, 253, 247]);
@@ -118,23 +121,33 @@ export function artClimate(cv: Canvas, x: number, y: number, w: number, h: numbe
     const yy = ty + 4 + i * Math.floor((th - 20) / 4);
     cv.line(tx + 14, yy, tx + 20, yy, PAL.ink, 1);
   }
+  // overtime clock (top right): hands past midnight
+  const kx = x + w - 34;
+  const ky = y + 22;
+  cv.circle(kx, ky, 15, [255, 253, 247], true);
+  cv.circle(kx, ky, 15, PAL.ink, false);
+  cv.line(kx, ky, kx - 2, ky - 10, PAL.ink, 2);
+  cv.line(kx, ky, kx + 9, ky + 3, PAL.red, 2);
+  cv.circle(kx, ky, 2, PAL.ink, true);
   // two opposing arrows (deadlock)
-  cv.line(x + w - 52, y + 16, x + w - 16, y + 16, PAL.red, 2);
-  cv.line(x + w - 16, y + 16, x + w - 22, y + 12, PAL.red, 2);
-  cv.line(x + w - 16, y + 16, x + w - 22, y + 20, PAL.red, 2);
-  cv.line(x + w - 16, y + 34, x + w - 52, y + 34, PAL.teal, 2);
-  cv.line(x + w - 52, y + 34, x + w - 46, y + 30, PAL.teal, 2);
-  cv.line(x + w - 52, y + 34, x + w - 46, y + 38, PAL.teal, 2);
+  cv.line(x + w - 52, y + 48, x + w - 16, y + 48, PAL.red, 2);
+  cv.line(x + w - 16, y + 48, x + w - 22, y + 44, PAL.red, 2);
+  cv.line(x + w - 16, y + 48, x + w - 22, y + 52, PAL.red, 2);
+  cv.line(x + w - 16, y + 62, x + w - 52, y + 62, PAL.teal, 2);
+  cv.line(x + w - 52, y + 62, x + w - 46, y + 58, PAL.teal, 2);
+  cv.line(x + w - 52, y + 62, x + w - 46, y + 66, PAL.teal, 2);
   // rising heat waves
   for (let i = 0; i < 3; i++) {
-    const wx = x + Math.floor(w * 0.42) + i * 12;
+    const wx = x + Math.floor(w * 0.40) + i * 12;
     for (let yy = 0; yy < 18; yy += 2) {
       cv.px(wx + Math.round(Math.sin(yy / 3) * 2), y + h - 40 + yy, PAL.flame);
     }
   }
 }
 
-// ---- big lead art 3: quake — Andes ridge + seismograph trace ---------
+// ---- big lead art 3: quake — Andes ridge, seismograph, broken homes ---
+// USGS revised the quake to M6.7; Sunday's count is 152 homes
+// uninhabitable near Junin, no deaths reported.
 export function artQuake(cv: Canvas, x: number, y: number, w: number, h: number): void {
   cv.rect(x, y, w, h, [224, 214, 188]);
   // ridge
@@ -162,11 +175,18 @@ export function artQuake(cv: Canvas, x: number, y: number, w: number, h: number)
   // crack down the middle
   cv.line(x + Math.floor(w * 0.5), y + Math.floor(h * 0.55), x + Math.floor(w * 0.47), y + h - 4, PAL.redDark, 2);
   cv.line(x + Math.floor(w * 0.47), y + h - 4, x + Math.floor(w * 0.52), y + h - 1, PAL.redDark, 1);
+  // three broken houses at the foot of the ridge
+  for (let i = 0; i < 3; i++) {
+    const hx = x + Math.floor(w * (0.60 + i * 0.13));
+    const hy = y + h - 22;
+    cv.rect(hx, hy + 6, 16, 10, [150, 120, 90]);
+    cv.poly([[hx - 2, hy + 6], [hx + 8, hy - 2], [hx + 18, hy + 6]], [120, 28, 20]);
+    cv.rect(hx + 6, hy + 10, 4, 6, [60, 50, 40]);
+  }
   // seismograph strip
   const sy = y + 8;
   cv.rect(x + 8, sy, w - 16, 20, [255, 253, 247]);
   cv.frame(x + 8, sy, w - 16, 20, PAL.ink, 1);
-  const r = rng(2213);
   let px = x + 10;
   const mid = sy + 10;
   cv.line(px, mid, px + 14, mid, PAL.ink, 1);
@@ -180,7 +200,6 @@ export function artQuake(cv: Canvas, x: number, y: number, w: number, h: number)
     if (px > x + w - 16) break;
   }
   cv.line(px, mid, x + w - 10, mid, PAL.ink, 1);
-  void r;
 }
 
 // ---- small motif icons (40x40 box) -------------------------------------
@@ -247,6 +266,56 @@ export function iconFlame(cv: Canvas, x: number, y: number): void {
   cv.poly(pts, PAL.flame);
 }
 
+// shield: diplomacy / expulsion / protection
+export function iconShield(cv: Canvas, x: number, y: number): void {
+  const pts: [number, number][] = [
+    [x + 20, y + 3], [x + 34, y + 9], [x + 34, y + 20],
+    [x + 20, y + 37], [x + 6, y + 20], [x + 6, y + 9],
+  ];
+  cv.poly(pts, PAL.navy2);
+  cv.polyLine(pts, PAL.ink);
+  cv.line(x + 20, y + 10, x + 20, y + 30, PAL.goldSoft, 2);
+  cv.line(x + 12, y + 16, x + 28, y + 16, PAL.goldSoft, 2);
+}
+
+// ballot box: elections / votes
+export function iconVote(cv: Canvas, x: number, y: number): void {
+  cv.rect(x + 8, y + 16, 24, 20, PAL.white);
+  cv.frame(x + 8, y + 16, 24, 20, PAL.ink, 1);
+  cv.rect(x + 16, y + 12, 8, 4, PAL.ink);
+  // ballot slip going in
+  cv.poly([[x + 14, y + 4], [x + 26, y + 4], [x + 26, y + 12], [x + 14, y + 12]], PAL.paper);
+  cv.line(x + 17, y + 6, x + 23, y + 6, PAL.red, 1);
+  cv.line(x + 17, y + 9, x + 21, y + 9, PAL.red, 1);
+  // tick on the box
+  cv.line(x + 12, y + 28, x + 17, y + 33, PAL.teal, 2);
+  cv.line(x + 17, y + 33, x + 28, y + 20, PAL.teal, 2);
+}
+
+// crosshair: strikes / targeting
+export function iconTarget(cv: Canvas, x: number, y: number): void {
+  cv.circle(x + 20, y + 20, 15, PAL.red, false);
+  cv.circle(x + 20, y + 20, 8, PAL.red, false);
+  cv.circle(x + 20, y + 20, 3, PAL.red, true);
+  cv.line(x + 20, y + 2, x + 20, y + 8, PAL.ink, 2);
+  cv.line(x + 20, y + 32, x + 20, y + 38, PAL.ink, 2);
+  cv.line(x + 2, y + 20, x + 8, y + 20, PAL.ink, 2);
+  cv.line(x + 32, y + 20, x + 38, y + 20, PAL.ink, 2);
+}
+
+// skyline: a city / mayoral politics
+export function iconCity(cv: Canvas, x: number, y: number): void {
+  cv.rect(x + 5, y + 16, 8, 22, PAL.navy2);
+  cv.rect(x + 15, y + 8, 10, 30, PAL.ink);
+  cv.rect(x + 27, y + 20, 8, 18, PAL.navy2);
+  for (let wy = y + 12; wy < y + 34; wy += 6) {
+    for (const wx of [x + 7, x + 17, x + 29]) {
+      cv.rect(wx, wy, 3, 3, PAL.goldSoft);
+    }
+  }
+  cv.line(x + 4, y + 38, x + 36, y + 38, PAL.ink, 1);
+}
+
 // ---- world map ----------------------------------------------------------
 // Rough continent outlines in [lon, lat]; equirectangular projection.
 const CONTINENTS: [number, number][][] = [
@@ -296,7 +365,7 @@ export function drawMap(
     cv.poly(pts, [196, 178, 128]);
     cv.polyLine(pts, [90, 78, 55]);
   }
-  // equator + tropics
+  // equator
   const [, ey] = proj(0, 0);
   cv.line(x, ey, x + w, ey, [150, 140, 110], 1);
   return proj;
@@ -305,7 +374,6 @@ export function drawMap(
 export function drawPin(cv: Canvas, x: number, y: number, n: number, c: RGB, fg: RGB): void {
   cv.circle(x, y, 6, c, true);
   cv.circle(x, y, 6, PAL.ink, false);
-  // number as tiny text is unreadable at this size; use a dot + count bar
   cv.px(x, y, fg);
   void n;
 }

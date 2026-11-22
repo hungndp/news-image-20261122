@@ -1,10 +1,9 @@
-// gfx.ts — own tiny graphics kit for the 22 Nov 2026 poster.
+// gfx.ts — own tiny graphics kit for the 22 Nov 2026 front page (v2).
 // Canvas over a raw RGB buffer, a hand-built 5x7 bitmap font
-// (uppercase + digits + punctuation, drawn from a glyph table I
-// wrote for this build), deterministic seeded grain/halftone, and
-// a minimal PNG encoder (zlib deflate, CRC32). No assets, no
-// network, no randomness outside fixed seeds: two runs are
-// byte-identical.
+// (uppercase + digits + punctuation), deterministic seeded grain /
+// halftone / newsprint texture, and a minimal PNG encoder (zlib
+// deflate, CRC32). No assets, no network, no randomness outside
+// fixed seeds: two runs are byte-identical.
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
 
@@ -48,9 +47,8 @@ function chunk(type: string, data: Buffer): Buffer {
 }
 
 // ---- 5x7 bitmap font --------------------------------------------------
-// Each glyph is 7 rows of 5 cells ('#' on, '.' off). Written from
-// the classic 5x7 letterforms; only uppercase, digits and the
-// punctuation the poster uses.
+// Each glyph is 7 rows of 5 cells ('#' on, '.' off). Uppercase,
+// digits and the punctuation the front page uses.
 const FONT: Record<string, string[]> = {
   A: [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
   B: ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
@@ -123,7 +121,7 @@ export function charWidth(scale: number): number {
 
 export function textWidth(s: string, scale: number): number {
   let w = 0;
-  for (const ch of s) w += ch === " " ? 6 * scale : 6 * scale;
+  for (const _ch of s) w += 6 * scale;
   return w === 0 ? 0 : w - scale; // no trailing gap
 }
 
@@ -238,7 +236,7 @@ export class Canvas {
   // deterministic paper grain: speckles of two tones
   grain(x: number, y: number, w: number, h: number, seed: number, dark: RGB, light: RGB): void {
     const r = rng(seed);
-    const n = Math.floor(w * h * 0.02);
+    const n = Math.floor(w * h * 0.012);
     for (let i = 0; i < n; i++) {
       const px = x + Math.floor(r() * w);
       const py = y + Math.floor(r() * h);
